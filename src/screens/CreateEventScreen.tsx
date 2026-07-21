@@ -210,7 +210,10 @@ export const CreateEventScreen = ({route}: Props) => {
                                                         size={20}
                                                         color={'#eff8ff'}
                                                     />
-                                                    <Text style={{color: '#f1f1f1', fontSize: 15}}>{user.name}</Text>
+                                                    <View style={{ flexDirection: 'column' }}>
+                                                        <Text style={{color: '#f1f1f1', fontSize: 15}}>{user.name}</Text>
+                                                        <Text style={{color: '#a0b0d0', fontSize: 12}}>{user.email}</Text>
+                                                    </View>
                                                 </TouchableOpacity>
                                             ))
                                         }
