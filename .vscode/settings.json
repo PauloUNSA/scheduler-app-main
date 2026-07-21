@@ -1,0 +1,9 @@
+{
+  "terminal.integrated.env.windows": {
+    "JAVA_HOME": "${workspaceFolder}\\..\\.tooling\\jdk17\\jdk-17.0.19+10",
+    "ANDROID_HOME": "${workspaceFolder}\\..\\.tooling\\android-sdk",
+    "ANDROID_SDK_ROOT": "${workspaceFolder}\\..\\.tooling\\android-sdk",
+    "ANDROID_AVD_HOME": "${env:USERPROFILE}\\.android\\avd",
+    "PATH": "${workspaceFolder}\\..\\.tooling\\jdk17\\jdk-17.0.19+10\\bin;${workspaceFolder}\\..\\.tooling\\android-sdk\\platform-tools;${workspaceFolder}\\..\\.tooling\\android-sdk\\emulator;${workspaceFolder}\\..\\.tooling\\android-sdk\\cmdline-tools\\latest\\bin;${env:PATH}"
+  }
+}

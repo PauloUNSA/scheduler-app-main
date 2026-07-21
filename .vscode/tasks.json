@@ -1,0 +1,30 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Scheduler: comprobar Android",
+      "type": "process",
+      "command": "npm.cmd",
+      "args": ["run", "android:check"],
+      "problemMatcher": []
+    },
+    {
+      "label": "Scheduler: ejecutar en Medium_Phone",
+      "type": "process",
+      "command": "npm.cmd",
+      "args": ["run", "android"],
+      "problemMatcher": [],
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      }
+    },
+    {
+      "label": "Scheduler: ejecutar en API 33",
+      "type": "process",
+      "command": "npm.cmd",
+      "args": ["run", "android:api33"],
+      "problemMatcher": []
+    }
+  ]
+}

@@ -113,4 +113,11 @@ const styles = StyleSheet.create({
         color: '#202020',
         lineHeight: 23,
     },
+    devContainer: {
+        flex: 1,
+        margin: 10,
+        padding: 14,
+        borderRadius: 8,
+        backgroundColor: '#ffffff',
+    },
 });

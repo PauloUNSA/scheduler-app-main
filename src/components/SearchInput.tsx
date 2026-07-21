@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { StyleProp, StyleSheet, TextInput, View, ViewStyle } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { useDebounceValue } from '../hooks/useDebounceValue';
@@ -11,11 +11,16 @@ interface Props {
 export const SearchInput = ({style, onDebounce}: Props) => {
 
     const [textValue, setTextValue] = useState('');
+    const onDebounceRef = useRef(onDebounce);
 
     const {debouncedValue} = useDebounceValue({input: textValue, time: 500});
 
     useEffect(() => {
-        onDebounce(debouncedValue);
+        onDebounceRef.current = onDebounce;
+    }, [onDebounce]);
+
+    useEffect(() => {
+        onDebounceRef.current(debouncedValue);
     }, [debouncedValue]);
 
     return (

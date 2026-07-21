@@ -3,11 +3,16 @@
   "version": "0.0.1",
   "private": true,
   "scripts": {
-    "android": "react-native run-android",
+    "android": "powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts/run-android.ps1 -AvdName Medium_Phone",
+    "android:api33": "powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts/run-android.ps1 -AvdName Scheduler_API_33",
+    "android:check": "powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts/run-android.ps1 -AvdName Medium_Phone -CheckOnly",
+    "android:cli": "react-native run-android",
     "ios": "react-native run-ios",
     "lint": "eslint .",
     "start": "react-native start",
-    "test": "jest"
+    "test": "jest",
+    "typecheck": "tsc --noEmit",
+    "bundle:android": "node -e \"require('fs').mkdirSync('build',{recursive:true})\" && react-native bundle --platform android --dev false --entry-file index.js --bundle-output build/index.android.bundle --assets-dest build"
   },
   "dependencies": {
     "@howljs/calendar-kit": "^1.13.2",

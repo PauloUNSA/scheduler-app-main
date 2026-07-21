@@ -8,6 +8,10 @@ import { getUserWithToken } from '../../helpers/getUserWithToken';
 
 import { UserPropsLogin, UserPropsRegister } from '../../interfaces/payloadInterfaces';
 import { UserLoginResponse, UserResponse } from '../../interfaces/userResponseInterfaces';
+import { getApiErrorMessage } from '../../helpers/getApiErrorMessage';
+import { onLogoutCalendar } from '../calendar/calendarSlice';
+import { onClearTodos } from '../todos/todosSlice';
+import { onClearInvitations } from '../invitations/invitationSlice';
 
 export const checkingAuthToken = () => {
     return async(dispatch: Dispatch) => {
@@ -29,23 +33,22 @@ export const checkingAuthToken = () => {
 
 export const startLogin = ({email, password} : UserPropsLogin) => {
     return async(dispatch: Dispatch) => {
-
+        dispatch(onChecking());
         try {
 
             const {data: {token}} = await schedulerApi.post<UserLoginResponse>('/auth/login', {
                 email,
                 password,
             });
-            dispatch(onChecking());
             const data = await getUserWithToken(token);
 
             //Guardar el token con el asyncStorage
             await AsyncStorage.setItem('token', data.token);
 
             dispatch(onLogin({name:data.name, email: data.email, id: data.id, roles: data.roles}));
-        } catch (error: any) {
+        } catch (error: unknown) {
             await AsyncStorage.clear();
-            dispatch(addErrorMessage(error.response.data.message));
+            dispatch(addErrorMessage([getApiErrorMessage(error, 'No se pudo iniciar sesión.')]));
         }
 
     };
@@ -54,7 +57,7 @@ export const startLogin = ({email, password} : UserPropsLogin) => {
 
 export const startRegister = ({name, email, password}: UserPropsRegister) => {
     return async(dispatch: Dispatch) => {
-
+        dispatch(onChecking());
         try {
 
             const {data} = await schedulerApi.post<UserResponse>('/auth/register', {
@@ -62,16 +65,14 @@ export const startRegister = ({name, email, password}: UserPropsRegister) => {
                 email,
                 password,
             });
-            dispatch(onChecking());
-
             //Guardar el token con el asyncStorage
             await AsyncStorage.setItem('token', data.token);
 
             dispatch(onLogin({name:data.name, email: data.email, id: data.id, roles: data.roles}));
 
-        } catch (error: any) {
+        } catch (error: unknown) {
             await AsyncStorage.clear();
-            dispatch(addErrorMessage(error.response.data.message));
+            dispatch(addErrorMessage([getApiErrorMessage(error, 'No se pudo crear la cuenta.')]));
         }
     };
 };
@@ -79,6 +80,9 @@ export const startRegister = ({name, email, password}: UserPropsRegister) => {
 export const startLogout = () => {
     return async(dispatch: Dispatch) => {
         await AsyncStorage.clear();
+        dispatch(onLogoutCalendar());
+        dispatch(onClearTodos());
+        dispatch(onClearInvitations());
         dispatch(onLogout());
     };
 };
