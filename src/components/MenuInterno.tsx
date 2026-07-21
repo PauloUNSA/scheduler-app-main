@@ -51,7 +51,7 @@ export const MenuInterno = (props: DrawerContentComponentProps) => {
 
     useEffect(() => {
         startLoadInvitations();
-    }, []);
+    }, [startLoadInvitations]);
 
     return (
         <BackgroundGradient style={{flex: 1}} colors={['#1074b9', '#1e93d9']}>

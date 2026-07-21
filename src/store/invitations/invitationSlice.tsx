@@ -34,6 +34,10 @@ export const invitationSlice = createSlice({
         onUncheckingInvitations: (state) => {
             state.isLoading = false;
         },
+        onClearInvitations: (state) => {
+            state.invitations = [];
+            state.isLoading = true;
+        },
     },
 });
 
@@ -42,4 +46,5 @@ export const {
     onResponseInvitation,
     onCheckingInvitations,
     onUncheckingInvitations,
+    onClearInvitations,
 } = invitationSlice.actions;

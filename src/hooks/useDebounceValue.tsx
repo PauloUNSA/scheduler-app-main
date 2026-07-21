@@ -18,7 +18,7 @@ export const useDebounceValue = ({input, time}: Props) => {
         return () => {
             clearTimeout(timeout);
         };
-    }, [input]);
+    }, [input, time]);
 
     return {
         debouncedValue,

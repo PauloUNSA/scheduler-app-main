@@ -15,7 +15,7 @@ const initialUser: UserStore = {
 };
 
 const initialState: AuthState = {
-    status: 'not-authenticated',
+    status: 'checking',
     user: initialUser,
     errorMessage: [],
 };

@@ -4,13 +4,15 @@ import { onCheckingInvitations, onLoadInvitations, onResponseInvitation, onUnche
 import { schedulerApi } from '../api/schedulerApi';
 import { Invitation, InvitationStatus } from '../interfaces/storeInterfaces';
 import { Alert } from 'react-native';
+import { useCallback } from 'react';
+import { getApiErrorMessage } from '../helpers/getApiErrorMessage';
 
 export const useInvitationStore = () => {
 
     const dispatch = useAppDispatch();
     const {invitations, isLoading} = useSelector((state: RootState) => state.invitation);
 
-    const startLoadInvitations = async() => {
+    const startLoadInvitations = useCallback(async() => {
         try {
             dispatch(onCheckingInvitations());
 
@@ -18,14 +20,13 @@ export const useInvitationStore = () => {
 
             dispatch(onLoadInvitations(data));
 
-        } catch (error: any) {
-            console.log(error);
+        } catch (error: unknown) {
             dispatch(onUncheckingInvitations());
-            Alert.alert(error.response.data.message);
+            Alert.alert(getApiErrorMessage(error, 'No se pudieron cargar las invitaciones.'));
         }
-    };
+    }, [dispatch]);
 
-    const startResponseInvitation = async(invitation: Invitation, status: InvitationStatus) => {
+    const startResponseInvitation = useCallback(async(invitation: Invitation, status: InvitationStatus) => {
         try {
 
             const {event} = invitation;
@@ -41,12 +42,11 @@ export const useInvitationStore = () => {
             };
             dispatch(onResponseInvitation(newInvitation));
 
-        } catch (error: any) {
-            console.log(error);
+        } catch (error: unknown) {
             dispatch(onUncheckingInvitations());
-            Alert.alert(error.response.data.message);
+            Alert.alert(getApiErrorMessage(error, 'No se pudo responder la invitación.'));
         }
-    };
+    }, [dispatch]);
 
     return {
         // datos del InvitationStore

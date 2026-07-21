@@ -1,78 +1,145 @@
-import { Dispatch } from '@reduxjs/toolkit';
-import { Event, Todo } from '../../interfaces/storeInterfaces';
-import { onAddTodo, onCheckingTodos, onDeleteTodo, onLoadTodos, onUncheckingTodos, onUpdateTodo } from './todosSlice';
 import { schedulerApi } from '../../api/schedulerApi';
-import { Alert } from 'react-native';
+import { getApiErrorMessage } from '../../helpers/getApiErrorMessage';
+import {
+    TodoFilters,
+    TodoPriority,
+    TodosResponse,
+} from '../../interfaces/storeInterfaces';
+import type { AppDispatch, RootState } from '../store';
+import {
+    onCheckingTodos,
+    onFinishSavingTodo,
+    onLoadTodos,
+    onSavingTodo,
+    onSetTodoFilters,
+    onTodosFailure,
+} from './todosSlice';
 
-interface ResponseTodo {
-    id: string,
-    description: string,
-    done: boolean,
-    event: Event,
+export interface TodoMutationInput {
+    description: string;
+    priority: TodoPriority;
+    dueAt: string | null;
+    assigneeId: string | null;
 }
 
-export const startLoadTodos = (id: string) => {
-    return async (dispatch: Dispatch) => {
-        try {
-            dispatch(onCheckingTodos());
-            const {data} = await schedulerApi.get<Event>(`/events/${id}`);
-            dispatch(onLoadTodos(data.todos));
+const toQueryParams = (filters: TodoFilters) => {
+    const params: Record<string, string | number | boolean> = {
+        page: filters.page,
+        limit: filters.limit,
+    };
 
-        } catch (error: any) {
-            console.log(error);
-            dispatch(onUncheckingTodos());
-            Alert.alert(error.response.data.message);
+    if (filters.status !== 'all') {
+        params.done = filters.status === 'completed';
+    }
+    if (filters.priority !== 'all') {
+        params.priority = filters.priority;
+    }
+    if (filters.assignedToMe) {
+        params.assignedToMe = true;
+    }
+    if (filters.overdue) {
+        params.overdue = true;
+    }
+    if (filters.search.trim()) {
+        params.search = filters.search.trim();
+    }
+
+    return params;
+};
+
+export const startLoadTodos = (
+    idEvent: string,
+    nextFilters?: Partial<TodoFilters>,
+    silent = false,
+) => {
+    return async (dispatch: AppDispatch, getState: () => RootState) => {
+        const filters = {...getState().todos.filters, ...nextFilters};
+        dispatch(onSetTodoFilters(filters));
+        if (!silent) {
+            dispatch(onCheckingTodos());
+        }
+
+        try {
+            const {data} = await schedulerApi.get<TodosResponse>(
+                `/events/${idEvent}/todos`,
+                {params: toQueryParams(filters)},
+            );
+            dispatch(onLoadTodos(data));
+            return true;
+        } catch (error: unknown) {
+            dispatch(onTodosFailure(getApiErrorMessage(error, 'No se pudieron cargar las tareas.')));
+            return false;
         }
     };
 };
 
-export const startAddTodo = (description: string, done: boolean, idEvent: string) => {
-    return async(dispatch: Dispatch) => {
+export const startAddTodo = (idEvent: string, input: TodoMutationInput) => {
+    return async (dispatch: AppDispatch) => {
+        dispatch(onSavingTodo());
         try {
-            const {data} = await schedulerApi.post<ResponseTodo>(`/events/${idEvent}/todos`, {
-                description,
-                done,
-            });
-            dispatch(onAddTodo({
-                id: data.id,
-                description: data.description,
-                done: data.done,
-            }));
+            await schedulerApi.post(`/events/${idEvent}/todos`, input);
+            await dispatch(startLoadTodos(idEvent, {page: 1}, true));
+            dispatch(onFinishSavingTodo());
+            return true;
+        } catch (error: unknown) {
+            dispatch(onTodosFailure(getApiErrorMessage(error, 'No se pudo crear la tarea.')));
+            return false;
+        }
+    };
+};
 
-        } catch (error: any) {
-            console.log(error);
-            dispatch(onUncheckingTodos());
-            Alert.alert(error.response.data.message);
+export const startUpdateTodo = (
+    idEvent: string,
+    idTodo: string,
+    input: TodoMutationInput,
+) => {
+    return async (dispatch: AppDispatch) => {
+        dispatch(onSavingTodo());
+        try {
+            await schedulerApi.patch(`/events/${idEvent}/todos/${idTodo}`, input);
+            await dispatch(startLoadTodos(idEvent, undefined, true));
+            dispatch(onFinishSavingTodo());
+            return true;
+        } catch (error: unknown) {
+            dispatch(onTodosFailure(getApiErrorMessage(error, 'No se pudo actualizar la tarea.')));
+            return false;
+        }
+    };
+};
+
+export const startSetTodoCompletion = (
+    idEvent: string,
+    idTodo: string,
+    done: boolean,
+) => {
+    return async (dispatch: AppDispatch) => {
+        dispatch(onSavingTodo());
+        try {
+            await schedulerApi.patch(
+                `/events/${idEvent}/todos/${idTodo}/completion`,
+                {done},
+            );
+            await dispatch(startLoadTodos(idEvent, undefined, true));
+            dispatch(onFinishSavingTodo());
+            return true;
+        } catch (error: unknown) {
+            dispatch(onTodosFailure(getApiErrorMessage(error, 'No se pudo cambiar el estado de la tarea.')));
+            return false;
         }
     };
 };
 
 export const startDeleteTodo = (idEvent: string, idTodo: string) => {
-    return async(dispatch: Dispatch) => {
+    return async (dispatch: AppDispatch) => {
+        dispatch(onSavingTodo());
         try {
             await schedulerApi.delete(`/events/${idEvent}/todos/${idTodo}`);
-            dispatch(onDeleteTodo(idTodo));
-        } catch (error: any) {
-            console.log(error);
-            dispatch(onUncheckingTodos());
-            Alert.alert(error.response.data.message);
+            await dispatch(startLoadTodos(idEvent, undefined, true));
+            dispatch(onFinishSavingTodo());
+            return true;
+        } catch (error: unknown) {
+            dispatch(onTodosFailure(getApiErrorMessage(error, 'No se pudo eliminar la tarea.')));
+            return false;
         }
     };
 };
-
-export const startUpdateTodo = (idEvent: string, todo: Todo) => {
-    return async(dispatch: Dispatch) => {
-        try {
-            const {data} = await schedulerApi.patch<Todo>(`/events/${idEvent}/todos/${todo.id}`, {
-                description: todo.description,
-                done: todo.done,
-            });
-            dispatch(onUpdateTodo(data));
-        } catch (error: any) {
-            console.log(error);
-            dispatch(onUncheckingTodos());
-            Alert.alert(error.response.data.message);
-        }
-    };
-};
-

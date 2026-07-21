@@ -1,19 +1,15 @@
 import { SubmitEvent } from '../../interfaces/events';
 import { schedulerApi } from '../../api/schedulerApi';
 import { EventResponse } from '../../interfaces/userResponseInterfaces';
-import { onAddNewEvent, onCheckingEvents, onDeleteActiveEvent, onDeleteEvent, onLoadEvents, onSetActiveEvent, onUncheckingEvents, onUpdateEvent } from './calendarSlice';
+import { onAddNewEvent, onCheckingEvents, onDeleteEvent, onLoadEvents, onSetActiveEvent, onUncheckingEvents, onUpdateEvent } from './calendarSlice';
 import { Dispatch } from '@reduxjs/toolkit';
 import { Event } from '../../interfaces/storeInterfaces';
 import { Alert } from 'react-native';
+import { getApiErrorMessage } from '../../helpers/getApiErrorMessage';
 
 export const startSetActiveEvent = (event: Event) => {
-    return async(dispatch: Dispatch) => {
-        setTimeout(() => {
-            dispatch(onDeleteActiveEvent());
-        });
-        setTimeout(() => {
-            dispatch(onSetActiveEvent(event));
-        }, 20);
+    return (dispatch: Dispatch) => {
+        dispatch(onSetActiveEvent(event));
     };
 };
 
@@ -39,13 +35,13 @@ export const startCreateEvent = ({title, description, start, end, color, partici
                 data.participants = participants;
             }
 
-            delete data.user;
             dispatch(onAddNewEvent(data));
+            return true;
 
-        } catch (error: any) {
-            console.log(error);
+        } catch (error: unknown) {
             dispatch(onUncheckingEvents());
-            Alert.alert(error.response.data.message);
+            Alert.alert(getApiErrorMessage(error, 'No se pudo crear el evento.'));
+            return false;
         }
     };
 };
@@ -56,10 +52,9 @@ export const startLoadEvents = () => {
             dispatch(onCheckingEvents());
             const {data} = await schedulerApi.get<Event[]>('/events/me');
             dispatch(onLoadEvents(data));
-        } catch (error: any) {
-            console.log(error);
+        } catch (error: unknown) {
             dispatch(onUncheckingEvents());
-            Alert.alert(error.response.data.message);
+            Alert.alert(getApiErrorMessage(error, 'No se pudieron cargar los eventos.'));
         }
     };
 };
@@ -70,10 +65,9 @@ export const startDeleteEvent = (event: Event) => {
             dispatch(onCheckingEvents());
             await schedulerApi.delete(`/events/${event.id}`);
             dispatch(onDeleteEvent(event));
-        } catch (error: any) {
-            console.log(error);
+        } catch (error: unknown) {
             dispatch(onUncheckingEvents());
-            Alert.alert(error.response.data.message);
+            Alert.alert(getApiErrorMessage(error, 'No se pudo eliminar el evento.'));
         }
     };
 };
@@ -103,10 +97,11 @@ export const startUpdateEvent = (event: Event, pastParticipants: any) => {
                 data.participants = participants;
             }
             dispatch(onUpdateEvent(data));
-        } catch (error: any) {
-            console.log(error);
+            return true;
+        } catch (error: unknown) {
             dispatch(onUncheckingEvents());
-            Alert.alert(error.response.data.message);
+            Alert.alert(getApiErrorMessage(error, 'No se pudo actualizar el evento.'));
+            return false;
         }
     };
 };

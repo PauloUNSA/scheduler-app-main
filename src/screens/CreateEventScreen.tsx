@@ -44,7 +44,8 @@ export const CreateEventScreen = ({route}: Props) => {
     const {goBack} = useNavigation();
     const {top} = useSafeAreaInsets();
 
-    const currentColor = useRef('#c0d3fd');
+    const currentColor = useRef(event?.color ?? '#c0d3fd');
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
     const dispatch = useAppDispatch();
 
@@ -55,9 +56,13 @@ export const CreateEventScreen = ({route}: Props) => {
         end:  event?.end || addHours(new Date(), 2).toISOString(),
     }});
 
-    const onSubmit = (data: SubmitEvent) => {
+    const onSubmit = async(data: SubmitEvent) => {
+
+        if (isSubmitting) {return;}
+        setIsSubmitting(true);
 
         const pastParticipants = event?.participants ?? [];
+        let succeeded: boolean;
 
         if (event) {
             event = {
@@ -66,20 +71,24 @@ export const CreateEventScreen = ({route}: Props) => {
                 color: currentColor.current,
                 participants,
             };
-            dispatch(startUpdateEvent(event, pastParticipants));
+            succeeded = await dispatch(startUpdateEvent(event, pastParticipants));
         } else {
             data.color = currentColor.current;
             data.participants = participants;
-            dispatch(startCreateEvent(data));
+            succeeded = await dispatch(startCreateEvent(data));
         }
 
-        reset({
-            title: '',
-            description: '',
-            start: new Date().toISOString(),
-            end: addHours(new Date(), 2).toISOString(),
-        });
-        goBack();
+        setIsSubmitting(false);
+
+        if (succeeded) {
+            reset({
+                title: '',
+                description: '',
+                start: new Date().toISOString(),
+                end: addHours(new Date(), 2).toISOString(),
+            });
+            goBack();
+        }
     };
 
     const searchUsers = async(searchText: string) => {
@@ -270,7 +279,13 @@ export const CreateEventScreen = ({route}: Props) => {
                                         </View>
                                     </View>
                                     <View style={{}}>
-                                        <ButtonSubmit title={(event) ? 'Editar evento' : 'Crear evento'} handleSubmit={handleSubmit} onSubmit={onSubmit}/>
+                                        <ButtonSubmit
+                                            title={(event) ? 'Editar evento' : 'Crear evento'}
+                                            handleSubmit={handleSubmit}
+                                            onSubmit={onSubmit}
+                                            disabled={isSubmitting}
+                                            isLoading={isSubmitting}
+                                        />
                                     </View>
                                     {/* Espacio para poder hacer scroll */}
                                     <View style={{height: 60}} />

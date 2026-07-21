@@ -9,7 +9,11 @@ export interface RegisterFormData {
     password: string,
 }
 
+import { TodoPriority } from './storeInterfaces';
+
 export interface TodoSubmit {
     description: string,
-    done: boolean,
+    priority: TodoPriority,
+    dueAt: string | null,
+    assigneeId: string | null,
 }
